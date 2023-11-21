@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sammy boyy</title>
+</head>
+<script>
+    function getMousePosition(event) {
+        var x = event.clientX;
+        var y = event.clientY;
+        var coor = "X coords: " + x + ", Y coords: " + y;
+        console.log(coor);
+
+        var url = "/run_model?x=" + x + "&y=" + y;
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send();
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                var imagePath = response.image_path;
+
+                // Update the image source in the HTML with the new path
+                document.getElementById('result-image').src = imagePath + '?' + new Date().getTime();
+            }
+        };
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        document.body.addEventListener("click", getMousePosition);
+    });
+</script>
+<body>
+<!--show image-->
+<img id="result-image" src="{{ url_for('static', filename=file) }}" alt="Result">
+</body>
+</html>
