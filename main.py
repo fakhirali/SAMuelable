@@ -29,23 +29,29 @@ def return_mask(img, input_points):
     return mask
 
 
-raw_image = Image.open('static/img.png').convert("RGB")
+raw_image = Image.open('static/img.jpg').convert("RGB")
 
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html', file='img.png')
-
-
+    return render_template('index.html', file='img.jpg')
+global_mask = np.zeros((raw_image.size[1], raw_image.size[0]), dtype=np.uint8)
 @app.route('/run_model', methods=['GET'])
 def run_model():
+    global global_mask
     x = request.args.get('x')
     y = request.args.get('y')
     mask = return_mask(raw_image, [[[x, y]]])
     orig_img = np.array(raw_image)
     mask = np.array(mask, dtype=np.uint8) * 1
+    global_mask += mask
+    mask = global_mask
+    kernel = np.ones((3, 3), np.uint8)
+    mask = cv2.dilate(mask, kernel, iterations=3)
     mask = mask.reshape(mask.shape[0], -1, 1)
     mask_img = np.concatenate((mask * 255, mask * 0, mask * 0), 2)
+    mask_white_img = np.concatenate((mask * 255, mask * 255, mask * 255), 2)
+    cv2.imwrite('static/mask.png', mask_white_img)
     final_img = cv2.addWeighted(orig_img, 1, mask_img, 0.5, 0)
     final_img = cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB)
     cv2.imwrite('static/result.png', final_img)
